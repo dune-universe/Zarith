@@ -2,11 +2,11 @@
    Integers.
 
 
-   This file is part of the Zarith library 
+   This file is part of the Zarith library
    http://forge.ocamlcore.org/projects/zarith .
    It is distributed under LGPL 2 licensing, with static linking exception.
    See the LICENSE file included in the distribution.
-   
+
    Copyright (c) 2010-2011 Antoine Miné, Abstraction project.
    Abstraction is part of the LIENS (Laboratoire d'Informatique de l'ENS),
    a joint laboratory by:
@@ -80,6 +80,7 @@ external pow: t -> int -> t = "ml_z_pow"
 external powm_sec: t -> t -> t -> t = "ml_z_powm_sec"
 external divexact: t -> t -> t = divexact@ASM
 external root: t -> int -> t = "ml_z_root"
+external rootrem: t -> int -> t * t = "ml_z_rootrem"
 external invert: t -> t -> t = "ml_z_invert"
 external perfect_power: t -> bool = "ml_z_perfect_power"
 external perfect_square: t -> bool = "ml_z_perfect_square"
@@ -88,6 +89,19 @@ external nextprime: t -> t = "ml_z_nextprime"
 external hash: t -> int = "ml_z_hash" @NOALLOC
 external to_bits: t -> string = "ml_z_to_bits"
 external of_bits: string -> t = "ml_z_of_bits"
+external divisible: t -> t -> bool = "ml_z_divisible"
+external congruent: t -> t -> t -> bool = "ml_z_congruent"
+external jacobi: t -> t -> int = "ml_z_jacobi"
+external legendre: t -> t -> int = "ml_z_legendre"
+external kronecker: t -> t -> int = "ml_z_kronecker"
+external remove: t -> t -> t * int = "ml_z_remove"
+external fac: int -> t = "ml_z_fac"
+external fac2: int -> t = "ml_z_fac2"
+external facM: int -> int -> t = "ml_z_facM"
+external primorial: int -> t = "ml_z_primorial"
+external bin: t -> int -> t = "ml_z_bin"
+external fib: int -> t = "ml_z_fib"
+external lucnum: int -> t = "ml_z_lucnum"
 
 let zero = of_int 0
 let one = of_int 1
@@ -124,13 +138,24 @@ let erem a b =
    if sign r >= 0 then r else add r (abs b)
 
 let gcdext u v =
-  let g,s,z = gcdext_intern u v in
-  if z then g, s, div (sub g (mul u s)) v
-  else g, div (sub g (mul v s)) u, s
+  match sign u, sign v with
+  (* special cases: one argument is null *)
+  |  0,  0 -> zero, zero, zero
+  |  0,  1 -> v, zero, one
+  |  0, -1 -> neg v, zero, minus_one
+  |  1,  0 -> u, one, zero
+  | -1,  0 -> neg u, minus_one, zero
+  | _ ->
+     (* general case *)
+     let g,s,z = gcdext_intern u v in
+     if z then g, s, div (sub g (mul u s)) v
+     else g, div (sub g (mul v s)) u, s
 
-let lcm u v = 
-  let g = gcd u v in
-  abs (mul (divexact u g) v)
+let lcm u v =
+  if u = zero || v = zero then zero
+  else
+    let g = gcd u v in
+    abs (mul (divexact u g) v)
 
 external testbit_internal: t -> int -> bool = "ml_z_testbit" @NOALLOC
 let testbit x n =
@@ -143,7 +168,7 @@ let is_even x  = not (testbit_internal x 0)
 
 let signed_extract x o l =
   if o < 0 then invalid_arg "Z.signed_extract: negative bit offset";
-  if l < 1 then invalid_arg "Z.signed_extract: non-positive bit length";
+  if l < 1 then invalid_arg "Z.signed_extract: nonpositive bit length";
   if testbit x (o + l - 1)
   then lognot (extract (lognot x) o l)
   else extract x o l
@@ -156,7 +181,7 @@ let log2up x =
 (* Consider a real number [r] such that
    - the integral part of [r] is the bigint [x]
    - 2^54 <= |x| < 2^63
-   - the fractional part of [r] is 0 if [exact = true], 
+   - the fractional part of [r] is 0 if [exact = true],
      nonzero if [exact = false].
    Then, the following function returns [r] correctly rounded
    according to the current rounding mode of the processor.
