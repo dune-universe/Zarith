@@ -3,7 +3,7 @@ name: CI
 on: [push, pull_request]
 
 jobs:
-  test:
+  Host-Freestanding:
     strategy:
       matrix:
         operating-system: [ubuntu-latest]
@@ -47,6 +47,21 @@ jobs:
         ocaml-version: 4.11.2
     - name: Dune, global GMP
       run: opam depext -iyt conf-gmp dune
+    - name: Compiling example project
+      run: opam exec -- dune build @install
+    - name: Running tests
+      run: opam exec -- dune runtest
+  Ubuntu-GMP:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions-ml/setup-ocaml@master
+      with:
+        ocaml-version: 4.11.2
+    - name: Pin ocaml-gmp
+      run: opam pin -n -y git+https://github.com/mirage/ocaml-gmp.git#master
+    - name: Dune, global GMP
+      run: opam depext -iyt gmp dune
     - name: Compiling example project
       run: opam exec -- dune build @install
     - name: Running tests
