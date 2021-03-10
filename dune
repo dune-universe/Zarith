@@ -39,7 +39,9 @@
 (rule
  (target env-true)
  (deps
-  (package gmp))
+  %{lib:gmp:libgmp.a}
+  %{lib:gmp:libgmp.so}
+  %{lib:gmp:gmp.h})
  (action
   (with-stdout-to
    %{target}
