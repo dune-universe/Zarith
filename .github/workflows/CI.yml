@@ -17,10 +17,8 @@ jobs:
         dune-cache: true
         opam-local-packages: |
           !zarith.opam
-    - name: Pin solo5
-      run: opam pin -n -y git+https://github.com/mato/solo5#new-toolchain
-    - name: Pin ocaml-freestanding
-      run: opam pin -n -y git+https://github.com/TheLortex/ocaml-freestanding#mirage-4-staging
+    - name: Add mirage-dev repository
+      run: opam repo add mirage-dev git+https://github.com/mirage/mirage-dev.git#master
     - name: Pin ocaml-gmp
       run: opam pin -n -y git+https://github.com/mirage/ocaml-gmp.git#master
     - name: Dune, global GMP
@@ -53,10 +51,19 @@ jobs:
           !zarith.opam
     - name: Dune, global GMP
       run: opam depext -iyt conf-gmp dune
-    - name: Compiling example project
+    - name: Compiling example project (switch)
       run: opam exec -- dune build @install
-    - name: Running tests
+    - name: Running tests (switch)
       run: opam exec -- dune runtest
+    - name: Run opam-monorepo
+      run: |
+        opam monorepo lock
+        opam monorepo pull
+    - name: Compiling example project (monorepo)
+      run: opam exec -- dune build @install
+    - name: Running tests (monorepo)
+      run: opam exec -- dune runtest
+    
   Ubuntu-GMP:
     runs-on: ubuntu-latest
     steps:
