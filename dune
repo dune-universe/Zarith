@@ -47,7 +47,7 @@
   (with-stdout-to
    %{target}
    (bash
-    "echo -n CC=\\\"%{cc}\\\" LDFLAGS=\\\"-L$(realpath $(dirname %{lib:gmp:libgmp.a}))\\\" CFLAGS=\\\"-I$(realpath $(dirname %{lib:gmp:libgmp.a}))\\\" CPPFLAGS=\\\"-I$(realpath $(dirname %{lib:gmp:libgmp.a}))\\\""))))
+    "echo -n CC=\\\"%{cc}\\\" LDFLAGS=\\\"-L$PWD/$(dirname %{lib:gmp:libgmp.a})\\\" CFLAGS=\\\"-I$PWD/$(dirname %{lib:gmp:libgmp.a})\\\" CPPFLAGS=\\\"-I$PWD/$(dirname %{lib:gmp:libgmp.a})\\\""))))
 
 (rule
  (target cflags.sxp)
