@@ -11,9 +11,12 @@ jobs:
     runs-on: ${{ matrix.operating-system }}
     steps:
     - uses: actions/checkout@v2
-    - uses: actions-ml/setup-ocaml@master
+    - uses: ocaml/setup-ocaml@v2
       with:
-        ocaml-version: ${{ matrix.ocaml-version }}
+        ocaml-compiler: ${{ matrix.ocaml-version }}
+        dune-cache: true
+        opam-local-packages: |
+          !zarith.opam
     - name: Pin solo5
       run: opam pin -n -y git+https://github.com/mato/solo5#new-toolchain
     - name: Pin ocaml-freestanding
@@ -42,9 +45,12 @@ jobs:
     runs-on: macos-latest
     steps:
     - uses: actions/checkout@v2
-    - uses: actions-ml/setup-ocaml@master
+    - uses: ocaml/setup-ocaml@v2
       with:
-        ocaml-version: 4.11.2
+        ocaml-compiler: 4.11.2
+        dune-cache: true
+        opam-local-packages: |
+          !zarith.opam
     - name: Dune, global GMP
       run: opam depext -iyt conf-gmp dune
     - name: Compiling example project
@@ -55,9 +61,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - uses: actions-ml/setup-ocaml@master
+    - uses: ocaml/setup-ocaml@v2
       with:
-        ocaml-version: 4.11.2
+        ocaml-compiler: 4.11.2
+        dune-cache: true
+        opam-local-packages: |
+          !zarith.opam
     - name: Pin ocaml-gmp
       run: opam pin -n -y git+https://github.com/mirage/ocaml-gmp.git#master
     - name: Dune, global GMP
