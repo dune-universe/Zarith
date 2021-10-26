@@ -21,7 +21,9 @@
  (target Makefile)
  (deps configure config.guess env)
  (action
-  (bash "env %{read:env}  ./configure")))
+  (with-stdout-to
+   config.log
+   (bash "env %{read:env}  ./configure"))))
 
 (rule
  (target env)
