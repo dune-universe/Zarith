@@ -10,3 +10,6 @@
 Makefile
 depend
 zarith_version.ml
+_build
+duniverse
+zarith.opam.locked

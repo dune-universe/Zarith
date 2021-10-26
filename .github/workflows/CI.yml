@@ -3,30 +3,84 @@ name: CI
 on: [push, pull_request]
 
 jobs:
-  Ubuntu:
-    runs-on: ubuntu-latest
+  Host-Freestanding:
+    strategy:
+      matrix:
+        operating-system: [ubuntu-latest]
+        ocaml-version: [4.10.2, 4.11.2]
+    runs-on: ${{ matrix.operating-system }}
     steps:
-    - name: Install packages
-      run: sudo apt-get install ocaml-nox libgmp-dev
-    - name: Checkout
-      uses: actions/checkout@v2
-    - name: configure tree
-      run: ./configure
-    - name: Build
-      run: make
-    - name: Run the testsuite
-      run: make -C tests test
-
+    - uses: actions/checkout@v2
+    - uses: ocaml/setup-ocaml@v2
+      with:
+        ocaml-compiler: ${{ matrix.ocaml-version }}
+        dune-cache: true
+        opam-local-packages: |
+          !zarith.opam
+    - name: Add mirage-dev repository
+      run: opam repo add mirage-dev git+https://github.com/mirage/mirage-dev.git#master
+    - name: Pin ocaml-gmp
+      run: opam pin -n -y git+https://github.com/TheLortex/ocaml-gmp.git#master
+    - name: Dune, global GMP
+      run: opam depext -iyt conf-gmp dune
+    - name: Compiling example project (host)
+      run: opam exec -- dune build @install
+    - name: Running tests (host)
+      run: opam exec -- dune runtest
+    - name: External dependencies for bindings 
+      run: opam depext -iyt ocaml-freestanding
+    - name: Dune and opam-monorepo
+      run: opam install -t -y dune opam-monorepo
+    - name: Run opam-monorepo
+      run: |
+        opam monorepo lock
+        opam monorepo pull
+    - name: Compiling example project (freestanding)
+      run: opam exec -- dune build @install --workspace dune-workspace.freestanding
+    - name: Running tests (freestanding)
+      run: opam exec -- dune runtest --workspace dune-workspace.freestanding
   MacOS:
     runs-on: macos-latest
     steps:
-    - name: Install packages
-      run: brew install ocaml ocaml-findlib gmp
-    - name: Checkout
-      uses: actions/checkout@v2
-    - name: configure tree
-      run: ./configure
-    - name: Build
-      run: make
-    - name: Run the testsuite
-      run: make -C tests test
+    - uses: actions/checkout@v2
+    - uses: ocaml/setup-ocaml@v2
+      with:
+        ocaml-compiler: 4.11.2
+        dune-cache: true
+        opam-local-packages: |
+          !zarith.opam
+    - name: Dune, global GMP
+      run: opam depext -iyt conf-gmp dune
+    - name: Compiling example project (switch)
+      run: opam exec -- dune build @install
+    - name: Running tests (switch)
+      run: opam exec -- dune runtest
+    - name: Pin ocaml-gmp
+      run: opam pin -n -y git+https://github.com/TheLortex/ocaml-gmp.git#master
+    - name: Run opam-monorepo
+      run: |
+        opam monorepo lock
+        opam monorepo pull
+    - name: Compiling example project (monorepo)
+      run: opam exec -- dune build @install
+    - name: Running tests (monorepo)
+      run: opam exec -- dune runtest
+    
+  Ubuntu-GMP:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: ocaml/setup-ocaml@v2
+      with:
+        ocaml-compiler: 4.11.2
+        dune-cache: true
+        opam-local-packages: |
+          !zarith.opam
+    - name: Pin ocaml-gmp
+      run: opam pin -n -y git+https://github.com/mirage/ocaml-gmp.git#master
+    - name: Dune, global GMP
+      run: opam depext -iyt gmp dune
+    - name: Compiling example project
+      run: opam exec -- dune build @install
+    - name: Running tests
+      run: opam exec -- dune runtest
