@@ -55,6 +55,8 @@ jobs:
       run: opam exec -- dune build @install
     - name: Running tests (switch)
       run: opam exec -- dune runtest
+    - name: Pin ocaml-gmp
+      run: opam pin -n -y git+https://github.com/TheLortex/ocaml-gmp.git#master
     - name: Run opam-monorepo
       run: |
         opam monorepo lock
