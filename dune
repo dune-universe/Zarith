@@ -1,7 +1,7 @@
 (env
  (dev
   (flags
-   (:standard -w -6))))
+   (:standard -w -6-32-39))))
 
 (library
  (name zarith)
